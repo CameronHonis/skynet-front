@@ -58,6 +58,7 @@ class ConnectCommand extends Command {
         socket.addEventListener('close', (event) => {
             this.addOutput("Connection failed");
             this.updateLastProcess({exitCode: 0});
+            this.setConnection(null);
         });
         
         socket.addEventListener('message', function (event) {
