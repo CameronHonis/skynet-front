@@ -1,5 +1,5 @@
 import TerminalProcess from "../models/terminal_process";
-import Command from "./command";
+import Command, { Argument, Flag, Param } from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 
@@ -8,8 +8,11 @@ class AsyncCommand extends Command {
         super(terminalParser);
     }
 
-    validate(params: string[]): string | null {
-        if (Number.isNaN(Number.parseFloat(params[1]))) {
+    _validate(params: Param[], _: Flag[], args: Argument[]): string | null {
+        if (args.length > 1) {
+            return `Too many arguments, expected one argument Float`;
+        }
+        if (args.length === 0 || Number.isNaN(Number.parseFloat(args[1].value))) {
             return `Expected type Float at parameter [1] '${params[1]}'`;
         }
         return null;

@@ -1,5 +1,5 @@
 import TerminalProcess from "../models/terminal_process";
-import Command from "./command";
+import Command, { Argument, Flag, Param } from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 
@@ -8,7 +8,7 @@ class EchoCommand extends Command {
         super(terminalParser);
     }
 
-    validate(params: string[]): string | null {
+    _validate(params: Param[], _: Flag[], __: Argument[]): string | null {
         return null;
     }
 

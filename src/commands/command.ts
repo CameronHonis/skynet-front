@@ -5,7 +5,17 @@ import TerminalBlockContent from "../models/terminal_block_contents";
 export interface Flag {
     name: string;
     value: string | boolean;
+    pos: number;
+    isFlag: true;
 }
+
+export interface Argument {
+    value: string;
+    pos: number;
+    isArgument: true;
+}
+
+export type Param = Flag | Argument;
 
 abstract class Command {
     terminalParser: TerminalParser;
@@ -14,17 +24,50 @@ abstract class Command {
         this.terminalParser = terminalParser;
     }
 
-    abstract validate(params: string[]): string | null
+    abstract _validate(params: Param[], flags: Flag[], args: Argument[]): string | null
 
     abstract execute(params: string[], id: number): TerminalProcess
 
+    validate(rawParams: string[]): string | null {
+        let flags: Flag[], args: Argument[];
+        // validate flag and args parsing
+        try {
+            flags = this.getFlags(rawParams);
+            args = this.getArguments(rawParams); 
+        } catch (err) {
+            //@ts-ignore
+            return `Error parsing params: ${err.message}`;
+        }
+
+        // insertion sort flags and args based on position
+        // Note: assumes `flags` and `args` are both sorted by pos initially
+        const params: Param[] = [];
+        let flagIdx = 0;
+        let argIdx = 0;
+        while (flagIdx < flags.length && argIdx < args.length) {
+            if (flags[flagIdx].pos < args[argIdx].pos) {
+                params.push(flags[flagIdx]);
+                flagIdx++;
+            } else {
+                params.push(args[argIdx]);
+                argIdx++;
+            }
+        }
+        params.push(...flags.slice(flagIdx));
+        params.push(...args.slice(argIdx));
+
+        // return result of unique command validation
+        return this._validate(params, flags, args);
+    }
+
     getFlags(params: string[]): Flag[] {
         const flags: Flag[] = [];
-        for (let param of params) {
+        for (let paramIdx = 1; paramIdx < params.length; paramIdx++) {
+            const param = params[paramIdx];
             if (param.startsWith("-")) {
                 if (!this._getIsValidDashFlag(param)) throw new Error(`Invalid flag parameter ${param}`);
                 for (let i = 1; i < param.length; i++) {
-                    flags.push({ name: param[i], value: true });
+                    flags.push({ name: param[i], value: true, pos: paramIdx, isFlag: true});
                 }
             } else if (param.startsWith("--")) {
                 if (!this._getIsValidDoubleDashFlag(param)) throw new Error(`Invalid flag parameter ${param}`);
@@ -36,22 +79,18 @@ abstract class Command {
                     name = param.substring(2);
                     value = true;
                 }
-                flags.push({ name, value });
+                flags.push({ name, value, pos: paramIdx, isFlag: true});
             }
         }
         return flags;
     }
 
-    getArguments(params: string[]): string[] {
-        const args: string[] = [];
-        let isFirst = true;
-        for (let param of params) {
-            if (isFirst) {
-                isFirst = false;
-                continue;
-            }
+    getArguments(params: string[]): Argument[] {
+        const args: Argument[] = [];
+        for (let paramIdx = 1; paramIdx < params.length; paramIdx++) {
+            const param = params[paramIdx];
             if (!(param.startsWith("-") || param.startsWith("--"))) {
-                args.push(param);
+                args.push({ value: param, pos: paramIdx, isArgument: true});
             }
         }
         return args;

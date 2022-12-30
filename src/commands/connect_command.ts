@@ -1,5 +1,5 @@
 import TerminalProcess from "../models/terminal_process";
-import Command from "./command";
+import Command, { Argument, Flag, Param } from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 import Connection from "../models/connection";
@@ -12,28 +12,38 @@ class ConnectCommand extends Command {
         this.setConnection = setConnection;
     }
 
-    validate(params: string[]): string | null {
-        if (!params[1]) return `Expected URL (string) at parameter [1]`;
+    _validate(_: Param[], __: Flag[], args: Argument[]): string | null {
+        if (args.length === 0) {
+            return `Expected URL (string) at parameter [1]`;
+        } else if (args.length > 1) {
+            return `Too many arguments provided, expected URL (string)`;
+        }
         return null;
     }
 
     execute(params: string[], id: number): TerminalProcess {
+        const input = params.join(" ");
+        const args = this.getArguments(params);
+
+        const baseTerminalBlockContent = new TerminalBlockContent({ username: this.terminalParser.username!,
+                                                                    location: this.terminalParser.location!,
+                                                                    input });
+
         if (this.connection) {
-            this.addOutput(`Connection to ${this.connection.socket.url} is already established`);
+            this.addTerminalBlock(baseTerminalBlockContent.copyWith({ 
+                output: [`Connection to ${this.connection.socket.url} is already established, exiting`]
+            }));
             return new TerminalProcess({ id, name: "connect", exitCode: 1 });
         }
-        const input = params.join(" ");
-        const parsedUrl = this._parseUrl(this.getArguments(params)[0]);
-        this.addTerminalBlock(new TerminalBlockContent({ username: this.terminalParser.username!, 
-            location: this.terminalParser.location!, input, output: [`Connecting to ${parsedUrl} ...`]}));
-        const process = new TerminalProcess({
-            id, 
-            name: "connect"
-        });
+
+        const parsedUrl = this._parseUrl(args[0].value);
+        this.addTerminalBlock(baseTerminalBlockContent.copyWith({
+            output: [`Connecting to ${parsedUrl} ...`]
+        }));
 
         this._initiateConnection(parsedUrl);
 
-        return process;
+        return new TerminalProcess({ id, name: "connect"});
     }
 
     private _parseUrl(rawUrl: string): string {
@@ -49,21 +59,29 @@ class ConnectCommand extends Command {
 
     private _initiateConnection(url: string): void {
         const socket = new WebSocket(url);
-        socket.addEventListener('open', (event) => {
+
+        const handleOpen = (event: Event) => {
             this.addOutput("Connection Established");
             this.updateLastProcess({exitCode: 0});
             socket.send('Connection Established');
-        });
-        
-        socket.addEventListener('close', (event) => {
+            socket.removeEventListener('close', handleClose);
+        }
+
+        const handleClose = (event: Event) => {
             this.addOutput("Connection failed");
             this.updateLastProcess({exitCode: 0});
             this.setConnection(null);
-        });
-        
-        socket.addEventListener('message', function (event) {
+        }
+
+        const handleMessage = (event: MessageEvent) => {
             console.log(event.data);
-        });
+        }
+
+        socket.addEventListener('open', handleOpen);
+        
+        socket.addEventListener('close', handleClose);
+        
+        socket.addEventListener('message', handleMessage);
 
         this.setConnection(new Connection(socket));
     }

@@ -1,4 +1,3 @@
-import React from "react";
 import Command from "../commands/command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalProcess from "../models/terminal_process";
@@ -6,6 +5,7 @@ import EchoCommand from "../commands/echo_command";
 import ConnectCommand from "../commands/connect_command";
 import AsyncCommand from "../commands/async_command";
 import Connection from "../models/connection";
+import DisconnectCommand from "../commands/disconnect_command";
 
 type Token = string;
 
@@ -30,7 +30,8 @@ class TerminalParser {
             "echo": new EchoCommand(this),
             "async": new AsyncCommand(this),
             "connect": new ConnectCommand(this, this.setConnection),
-        }
+            "disconnect": new DisconnectCommand(this, this.setConnection),
+        };
     }
 
     parse(input: string) {

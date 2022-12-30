@@ -8,6 +8,7 @@ import Helpers from "../services/helpers";
 import TerminalParser from "../services/terminal_parser";
 import Connection from "../models/connection";
 import ConnectCommand from "../commands/connect_command";
+import DisconnectCommand from "../commands/disconnect_command";
 
 const CURSOR_VISIBLE_MS = 500;
 const CURSOR_HIDDEN_MS = 500;
@@ -119,6 +120,7 @@ const Terminal = (props: Props) => {
 
     React.useEffect(() => {
         (inputProcessor.commandsByName["connect"] as ConnectCommand).connection = connection;
+        (inputProcessor.commandsByName["disconnect"] as DisconnectCommand).connection = connection;
     }, [connection]);
 
 

@@ -1,5 +1,5 @@
 import React from "react";
-import TerminalBlockContent from "./models/terminal_block_contents";
+import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalBlockHeader from "./TerminalBlockHeader";
 import TerminalInput from "./TerminalInput";
 import TerminalOutput from "./TerminalOutput";
