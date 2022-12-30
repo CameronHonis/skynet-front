@@ -9,12 +9,15 @@ import TerminalParser from "../services/terminal_parser";
 import Connection from "../models/connection";
 import ConnectCommand from "../commands/connect_command";
 import DisconnectCommand from "../commands/disconnect_command";
+import useStoredState from "../hooks/UseStoredState";
 
 const CURSOR_VISIBLE_MS = 500;
 const CURSOR_HIDDEN_MS = 500;
 const CURSOR_FLASH_MS = 500;
 
 const PERMITTED_INPUT = "`1234567890-=qwertyuiop[]\\asdfghjkl;'zxcvbnm,./~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>? ";
+
+const HISTORY_QUEUE_SIZE = 50;
 
 interface Props {
     username: string;
@@ -39,13 +42,15 @@ const Terminal = (props: Props) => {
     const [ isCursorVisible, setIsCursorVisible ] = React.useState<boolean>(true);
     const [ cursorTimeBank, setCursorTimeBank ] = React.useState<number>(CURSOR_VISIBLE_MS);
     const [ cursorTimeout, setCursorTimeout ] = React.useState<NodeJS.Timeout | null>(null);
+    const [ selectedHistoryIndex, setSelectedHistoryIndex ] = React.useState<number>(-1);
+    const [ history, setHistory ] = useStoredState<string[]>(["terminal", "history"], []);
     const [ blockContents, setBlockContents ] = React.useState<TerminalBlockContent[]>([
         new TerminalBlockContent({username: "camer", location: "unknown", input: "time", output: [new Date().toISOString()]}),
         new TerminalBlockContent({username: "camer", location: "unknown", input: "connect 192.168.1.127", output: ["attempting connection...", "connected!"]}),
         new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "lights off -a"}),
         new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "this is a really long input, so long that it might break something.... like maybe your precious styling? we'll just have to find out and see >:)", output: ["Command 'this' not found, did you mean 'test'?"]})
     ]);
-    const [ inputProcessor, setInputProcessor ] = React.useState<TerminalParser>(new TerminalParser(setLastProcess, setBlockContents, setConnection));
+    const [ inputProcessor, _ ] = React.useState<TerminalParser>(new TerminalParser(setLastProcess, setBlockContents, setConnection));
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -60,10 +65,25 @@ const Terminal = (props: Props) => {
             
             let newCursorCharIndex = cursorCharIndex;
             let newCurrInputText = currInputText;
+            let newSelectedHistoryIndex = selectedHistoryIndex;
+            let newHistory = history;
             if (e.key === "ArrowRight") {
                 newCursorCharIndex = cursorCharIndex + 1;
             } else if (e.key === "ArrowLeft") {
                 newCursorCharIndex = cursorCharIndex - 1;
+            } else if (e.key === "ArrowUp") {
+                if (selectedHistoryIndex < newHistory.length - 1) {
+                    newSelectedHistoryIndex += 1;
+                }
+                newCurrInputText = newHistory[newSelectedHistoryIndex];
+            } else if (e.key === "ArrowDown") {
+                if (selectedHistoryIndex > 0) {
+                    newSelectedHistoryIndex -= 1;
+                    newCurrInputText = newHistory[newSelectedHistoryIndex];
+                } else if (selectedHistoryIndex === 0) {
+                    newSelectedHistoryIndex -= 1;
+                    newCurrInputText = "";
+                }
             } else if (e.key === "a" && e.ctrlKey) {
                 newCursorCharIndex = 0;
             } else if (PERMITTED_INPUT.indexOf(e.key) > -1) {
@@ -78,9 +98,25 @@ const Terminal = (props: Props) => {
             } else if (e.key === "Enter") {
                 newCurrInputText = "";
                 inputProcessor.parse(currInputText);
+                newHistory = [currInputText, ...history.slice(0, HISTORY_QUEUE_SIZE - 1)];
             }
-            setCursorCharIndex(Helpers.clamp(newCursorCharIndex, 0, newCurrInputText.length));
-            setCurrInputText(newCurrInputText);
+
+            // normalize states
+            newCursorCharIndex = Helpers.clamp(newCursorCharIndex, 0, newCurrInputText.length);
+
+            // set changed states
+            if (newCursorCharIndex !== cursorCharIndex) {
+                setCursorCharIndex(newCursorCharIndex);
+            }
+            if (newCurrInputText !== currInputText) {
+                setCurrInputText(newCurrInputText);
+            }
+            if (newSelectedHistoryIndex !== selectedHistoryIndex) {
+                setSelectedHistoryIndex(newSelectedHistoryIndex);
+            }
+            if (newHistory !== history) {
+                setHistory(newHistory);
+            }
         }
         document.addEventListener("keydown", handleKeydown);
         return () => document.removeEventListener("keydown", handleKeydown);

@@ -1,27 +1,19 @@
-const readFromStorage = (localStoragePath: string | string[]): string | null => {
-    if (typeof localStoragePath === "string") {
-        return localStorage.getItem(localStoragePath);
-    } else {
-        let storedData = JSON.parse(localStorage.getItem(localStoragePath[0]) as string);
-        for (let pathSeg of localStoragePath) {
-            if (storedData == null) return null;
-            storedData = storedData[pathSeg];    
-        }
-        return storedData;
-    }
+import React from "react";
+import LocalStorageService, {LocalPath} from "../services/local_storage_service";
+import useDidUpdateEffect from "./UseDidUpdateEffect";
+
+function useStoredState <T>(storagePath: LocalPath, defaultData: T): [T, (newData: T) => void] {
+    const initData = React.useMemo(() => {
+        return LocalStorageService.readOrInitializeFromStorage<T>(storagePath, defaultData);
+    }, []);
+
+    const [ data, setData ] = React.useState<T>(initData);
+
+    useDidUpdateEffect(() => {
+        LocalStorageService.writeToStorage(storagePath, data);
+    }, [data]);
+
+    return [ data, setData ];
 }
 
-const writeToStorage = (localStoragePath: string | string[]): void => {
-
-}
-
-const readOrInitializeFromStorage = (localStoragePath: string | string[]): string | null => {
-    const storedData = readFromStorage(localStoragePath);
-    if (localStoragePath == null) {
-        writeToStorage
-    }
-}
-
-const useStoredState = (localStoragePath: string | string[]) => {
-
-}
+export default useStoredState;
