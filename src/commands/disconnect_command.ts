@@ -8,7 +8,7 @@ class DisconnectCommand extends Command {
     connection: Connection | null = null;
     setConnection: SetState<Connection | null>;
     constructor(terminalParser: TerminalParser, setConnection: SetState<Connection | null>) {
-        super(terminalParser);
+        super("disconnect", "disconnects from current websocket connection", terminalParser);
         this.setConnection = setConnection;
     }
 
@@ -19,8 +19,8 @@ class DisconnectCommand extends Command {
         return null;
     }
 
-    execute(params: string[], id: number): TerminalProcess {
-        const input = params.join(" ");
+    execute(tokens: string[], id: number): TerminalProcess {
+        const input = tokens.join(" ");
 
         const baseTerminalBlockContent = new TerminalBlockContent({ username: this.terminalParser.username!,
                                                                     location: this.terminalParser.location!,
@@ -28,7 +28,7 @@ class DisconnectCommand extends Command {
 
         if (!this.connection) {
             this.addTerminalBlock(baseTerminalBlockContent.copyWith({ output: [`No connection established, exiting`]}));
-            return new TerminalProcess({ id, name: "connect", exitCode: 1 });
+            return new TerminalProcess({ id, name: this.verb, exitCode: 1 });
         }
 
         this.connection.socket.close();
@@ -38,7 +38,7 @@ class DisconnectCommand extends Command {
 
         return new TerminalProcess({
             id, 
-            name: "connect",
+            name: this.verb,
             exitCode: 0
         });
     }

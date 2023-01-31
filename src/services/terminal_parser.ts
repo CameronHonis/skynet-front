@@ -3,7 +3,7 @@ import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalProcess from "../models/terminal_process";
 import EchoCommand from "../commands/echo_command";
 import ConnectCommand from "../commands/connect_command";
-import AsyncCommand from "../commands/async_command";
+import AsyncEchoCommand from "../commands/async_echo_command";
 import Connection from "../models/connection";
 import DisconnectCommand from "../commands/disconnect_command";
 
@@ -17,8 +17,8 @@ class TerminalParser {
     setLastProcess: SetState<TerminalProcess | null>
     setBlockContents: SetState<TerminalBlockContent[]>
     setConnection: SetState<Connection | null>
-
-    commandsByName: {[token: Token]: Command};
+    commands: Command[];
+    commandsByVerb: {[token: Token]: Command};
 
     constructor(setLastProcess: SetState<TerminalProcess | null>,
                 setBlockContents: SetState<TerminalBlockContent[]>,
@@ -26,17 +26,23 @@ class TerminalParser {
         this.setLastProcess = setLastProcess;
         this.setBlockContents = setBlockContents;
         this.setConnection = setConnection;
-        this.commandsByName = {
-            "echo": new EchoCommand(this),
-            "async": new AsyncCommand(this),
-            "connect": new ConnectCommand(this, this.setConnection),
-            "disconnect": new DisconnectCommand(this, this.setConnection),
-        };
+
+        this.commands = [
+            new EchoCommand(this),
+            new AsyncEchoCommand(this),
+            new ConnectCommand(this, this.setConnection),
+            new DisconnectCommand(this, this.setConnection),
+        ];
+
+        this.commandsByVerb = {};
+        for (let command of this.commands) {
+            this.commandsByVerb[command.verb] = command;
+        }
     }
 
     parse(input: string) {
         const tokens = this._tokenize(input);
-        const command = this.commandsByName[tokens[0]];
+        const command = this.commandsByVerb[tokens[0]];
         if (command) {
             const paramValidationErrorMessage = command.validate(tokens);
             if (paramValidationErrorMessage) {

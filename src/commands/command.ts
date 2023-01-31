@@ -18,15 +18,19 @@ export interface Argument {
 export type Param = Flag | Argument;
 
 abstract class Command {
+    verb: string;
+    summary: string;
     terminalParser: TerminalParser;
 
-    constructor(terminalParser: TerminalParser) {
+    constructor(verb: string, summary: string, terminalParser: TerminalParser) {
+        this.verb = verb;
+        this.summary = summary;
         this.terminalParser = terminalParser;
     }
 
     abstract _validate(params: Param[], flags: Flag[], args: Argument[]): string | null
 
-    abstract execute(params: string[], id: number): TerminalProcess
+    abstract execute(tokens: string[], id: number): TerminalProcess
 
     validate(rawParams: string[]): string | null {
         let flags: Flag[], args: Argument[];

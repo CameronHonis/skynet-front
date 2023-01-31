@@ -50,7 +50,7 @@ const Terminal = (props: Props) => {
         new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "lights off -a"}),
         new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "this is a really long input, so long that it might break something.... like maybe your precious styling? we'll just have to find out and see >:)", output: ["Command 'this' not found, did you mean 'test'?"]})
     ]);
-    const [ inputProcessor, _ ] = React.useState<TerminalParser>(new TerminalParser(setLastProcess, setBlockContents, setConnection));
+    const [ inputProcessor, ] = React.useState<TerminalParser>(new TerminalParser(setLastProcess, setBlockContents, setConnection));
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -155,8 +155,8 @@ const Terminal = (props: Props) => {
     }, [lastProcess, blockContents, username, location]);
 
     React.useEffect(() => {
-        (inputProcessor.commandsByName["connect"] as ConnectCommand).connection = connection;
-        (inputProcessor.commandsByName["disconnect"] as DisconnectCommand).connection = connection;
+        (inputProcessor.commandsByVerb["connect"] as ConnectCommand).connection = connection;
+        (inputProcessor.commandsByVerb["disconnect"] as DisconnectCommand).connection = connection;
     }, [connection]);
 
 

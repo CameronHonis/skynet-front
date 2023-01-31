@@ -5,21 +5,21 @@ import TerminalParser from "../services/terminal_parser";
 
 class EchoCommand extends Command {
     constructor(terminalParser: TerminalParser) {
-        super(terminalParser);
+        super("echo", "prints out input", terminalParser);
     }
 
     _validate(params: Param[], _: Flag[], __: Argument[]): string | null {
         return null;
     }
 
-    execute(params: string[], id: number): TerminalProcess {
-        const input = params.join(" ");
+    execute(tokens: string[], id: number): TerminalProcess {
+        const input = tokens.join(" ");
         this.addTerminalBlock(new TerminalBlockContent({ username: this.terminalParser.username!, 
-            location: this.terminalParser.location!, input, output: params.slice(1)}));
+            location: this.terminalParser.location!, input, output: tokens.slice(1)}));
 
         return new TerminalProcess({
             id,
-            name: "echo",
+            name: this.verb,
             exitCode: 0, 
         });
     }

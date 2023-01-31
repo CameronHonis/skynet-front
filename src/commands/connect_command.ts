@@ -8,7 +8,7 @@ class ConnectCommand extends Command {
     connection: Connection | null = null;
     setConnection: SetState<Connection | null>;
     constructor(terminalParser: TerminalParser, setConnection: SetState<Connection | null>) {
-        super(terminalParser);
+        super("connect", "attempts to establish websocket connection", terminalParser);
         this.setConnection = setConnection;
     }
 
@@ -21,9 +21,9 @@ class ConnectCommand extends Command {
         return null;
     }
 
-    execute(params: string[], id: number): TerminalProcess {
-        const input = params.join(" ");
-        const args = this.getArguments(params);
+    execute(tokens: string[], id: number): TerminalProcess {
+        const input = tokens.join(" ");
+        const args = this.getArguments(tokens);
 
         const baseTerminalBlockContent = new TerminalBlockContent({ username: this.terminalParser.username!,
                                                                     location: this.terminalParser.location!,
@@ -33,7 +33,7 @@ class ConnectCommand extends Command {
             this.addTerminalBlock(baseTerminalBlockContent.copyWith({ 
                 output: [`Connection to ${this.connection.socket.url} is already established, exiting`]
             }));
-            return new TerminalProcess({ id, name: "connect", exitCode: 1 });
+            return new TerminalProcess({ id, name: this.verb, exitCode: 1 });
         }
 
         const parsedUrl = this._parseUrl(args[0].value);
@@ -43,7 +43,7 @@ class ConnectCommand extends Command {
 
         this._initiateConnection(parsedUrl);
 
-        return new TerminalProcess({ id, name: "connect"});
+        return new TerminalProcess({ id, name: this.verb});
     }
 
     private _parseUrl(rawUrl: string): string {
