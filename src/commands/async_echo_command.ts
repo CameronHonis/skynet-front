@@ -1,11 +1,11 @@
 import TerminalProcess from "../models/terminal_process";
-import Command, { Argument, Flag, Param } from "./command";
+import Command, {Argument, CommandVerb, Flag, Param} from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 
 class AsyncEchoCommand extends Command {
     constructor(terminalParser: TerminalParser) {
-        super("async-echo", "yields for given time and prints back input", terminalParser);
+        super(CommandVerb.ASYNC_ECHO, "yields for given time and prints back input", terminalParser);
     }
 
     _validate(params: Param[], _: Flag[], args: Argument[]): string | null {

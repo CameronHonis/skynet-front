@@ -1,11 +1,11 @@
 import TerminalProcess from "../models/terminal_process";
-import Command, { Argument, Flag, Param } from "./command";
+import Command, {Argument, CommandVerb, Flag, Param} from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 
 class EchoCommand extends Command {
     constructor(terminalParser: TerminalParser) {
-        super("echo", "prints out input", terminalParser);
+        super(CommandVerb.ECHO, "prints out input", terminalParser);
     }
 
     _validate(params: Param[], _: Flag[], __: Argument[]): string | null {

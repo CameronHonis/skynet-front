@@ -17,12 +17,20 @@ export interface Argument {
 
 export type Param = Flag | Argument;
 
+export enum CommandVerb {
+    CONNECT = "connect",
+    DISCONNECT = "disconnect",
+    ECHO = "echo",
+    ASYNC_ECHO = "async-echo",
+    SOCKET_SEND = "socket-send"
+}
+
 abstract class Command {
-    verb: string;
+    verb: CommandVerb;
     summary: string;
     terminalParser: TerminalParser;
 
-    constructor(verb: string, summary: string, terminalParser: TerminalParser) {
+    constructor(verb: CommandVerb, summary: string, terminalParser: TerminalParser) {
         this.verb = verb;
         this.summary = summary;
         this.terminalParser = terminalParser;

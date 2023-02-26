@@ -1,3 +1,5 @@
+import Helpers from "./helpers";
+
 export type LocalPath = string | (string | number)[];
 
 class LocalStorageService {
@@ -48,6 +50,20 @@ class LocalStorageService {
             return defaultData;
         }
         return storedData;
+    }
+
+    static watchState<T>(path: LocalPath, data: T, setState: React.Dispatch<React.SetStateAction<T>>) {
+        let lastData = data;
+        const watchStep = () => {
+            const currData = this.readFromStorage(path);
+            if (!Helpers.recursiveCompare(lastData, currData)) {
+                lastData = currData;
+                setState(currData);
+            }
+            window.requestAnimationFrame(watchStep);
+        }
+
+        window.requestAnimationFrame(watchStep);
     }
 }
 

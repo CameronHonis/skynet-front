@@ -1,14 +1,15 @@
 import TerminalProcess from "../models/terminal_process";
-import Command, { Argument, Flag, Param } from "./command";
+import Command, {Argument, CommandVerb, Flag, Param} from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 import Connection from "../models/connection";
+import {SetState} from "index";
 
 class DisconnectCommand extends Command {
     connection: Connection | null = null;
     setConnection: SetState<Connection | null>;
     constructor(terminalParser: TerminalParser, setConnection: SetState<Connection | null>) {
-        super("disconnect", "disconnects from current websocket connection", terminalParser);
+        super(CommandVerb.DISCONNECT, "disconnects from current websocket connection", terminalParser);
         this.setConnection = setConnection;
     }
 

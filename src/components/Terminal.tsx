@@ -10,6 +10,7 @@ import Connection from "../models/connection";
 import ConnectCommand from "../commands/connect_command";
 import DisconnectCommand from "../commands/disconnect_command";
 import useStoredState from "../hooks/UseStoredState";
+import {SetState} from "index";
 
 const CURSOR_VISIBLE_MS = 500;
 const CURSOR_HIDDEN_MS = 500;
@@ -47,8 +48,8 @@ const Terminal = (props: Props) => {
     const [ blockContents, setBlockContents ] = React.useState<TerminalBlockContent[]>([
         new TerminalBlockContent({username: "camer", location: "unknown", input: "time", output: [new Date().toISOString()]}),
         new TerminalBlockContent({username: "camer", location: "unknown", input: "connect 192.168.1.127", output: ["attempting connection...", "connected!"]}),
-        new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "lights off -a"}),
-        new TerminalBlockContent({username: "camer", location: "192.168.1.127", input: "this is a really long input, so long that it might break something.... like maybe your precious styling? we'll just have to find out and see >:)", output: ["Command 'this' not found, did you mean 'test'?"]})
+        new TerminalBlockContent({username: "camer", location: "127.0.0.1", input: "lights off -a"}),
+        new TerminalBlockContent({username: "camer", location: "127.0.0.1", input: "this is a really long input, so long that it might break something.... like maybe your precious styling? we'll just have to find out and see >:)", output: ["Command 'this' not found, did you mean 'test'?"]})
     ]);
     const [ inputProcessor, ] = React.useState<TerminalParser>(new TerminalParser(setLastProcess, setBlockContents, setConnection));
 
@@ -158,7 +159,6 @@ const Terminal = (props: Props) => {
         (inputProcessor.commandsByVerb["connect"] as ConnectCommand).connection = connection;
         (inputProcessor.commandsByVerb["disconnect"] as DisconnectCommand).connection = connection;
     }, [connection]);
-
 
     let renderedInputText = currInputText;
     if (isCursorVisible && focus === "terminal") {

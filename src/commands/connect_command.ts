@@ -1,14 +1,15 @@
 import TerminalProcess from "../models/terminal_process";
-import Command, { Argument, Flag, Param } from "./command";
+import Command, {Argument, CommandVerb, Flag, Param} from "./command";
 import TerminalBlockContent from "../models/terminal_block_contents";
 import TerminalParser from "../services/terminal_parser";
 import Connection from "../models/connection";
+import {SetState} from "index";
 
 class ConnectCommand extends Command {
     connection: Connection | null = null;
     setConnection: SetState<Connection | null>;
     constructor(terminalParser: TerminalParser, setConnection: SetState<Connection | null>) {
-        super("connect", "attempts to establish websocket connection", terminalParser);
+        super(CommandVerb.CONNECT, "attempts to establish websocket connection", terminalParser);
         this.setConnection = setConnection;
     }
 
@@ -64,22 +65,25 @@ class ConnectCommand extends Command {
             this.addOutput("Connection Established");
             this.updateLastProcess({exitCode: 0});
             socket.send('Connection Established');
-            socket.removeEventListener('close', handleClose);
+            socket.removeEventListener('close', handleOpenFailure);
         }
 
-        const handleClose = (event: Event) => {
+        const handleOpenFailure = (event: Event) => {
             this.addOutput("Connection failed");
             this.updateLastProcess({exitCode: 0});
             this.setConnection(null);
         }
 
         const handleMessage = (event: MessageEvent) => {
-            console.log(event.data);
+            console.log(`< ${event.data}`);
+            if (this.connection && this.connection.messageHandler) {
+                this.connection.messageHandler(event.data);
+            }
         }
 
         socket.addEventListener('open', handleOpen);
         
-        socket.addEventListener('close', handleClose);
+        socket.addEventListener('close', handleOpenFailure);
         
         socket.addEventListener('message', handleMessage);
 
